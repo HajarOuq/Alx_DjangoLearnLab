@@ -190,8 +190,57 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # Add the CSP middleware to MIDDLEWARE (see below)
 # ----------------
 # Example CSP (strict-ish) - adjust to your allowed domains
-CSP_DEFAULT_SRC = ("'self'",)
-CSP_SCRIPT_SRC = ("'self'",)   # add external script origins as needed
-CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")  # 'unsafe-inline' only if required
-CSP_IMG_SRC = ("'self'", "data:")
-CSP_FONT_SRC = ("'self'", "data:")
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": ("'self'",),
+        "script-src": ("'self'",),
+        "style-src": ("'self'", "'unsafe-inline'"),
+        "img-src": ("'self'", "data:"),
+        "font-src": ("'self'", "data:"),
+    }
+}
+
+
+# =========================
+# HTTPS & Security Settings
+# =========================
+
+import os
+
+# Use environment variables for production secrets and toggles
+DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
+
+# IMPORTANT: set this to your domain(s) in production, e.g. "example.com"
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost 127.0.0.1").split()
+
+# Secret key must be loaded from an environment variable in production
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-secret-key")
+
+# Redirect all HTTP requests to HTTPS.
+# Production: True (requires HTTPS to be available). For local dev, set False.
+SECURE_SSL_REDIRECT = os.environ.get("DJANGO_SECURE_SSL_REDIRECT", "True") == "True"
+
+# HTTP Strict Transport Security (HSTS)
+# Instruct browsers to access site only over HTTPS for the given seconds.
+# Example: 31536000 = 1 year. Only enable long durations after you are sure HTTPS works.
+SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_SECURE_HSTS_SECONDS", "31536000"))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = os.environ.get("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", "True") == "True"
+SECURE_HSTS_PRELOAD = os.environ.get("DJANGO_SECURE_HSTS_PRELOAD", "True") == "True"
+
+# Secure cookies: only transmit cookies over HTTPS
+SESSION_COOKIE_SECURE = os.environ.get("DJANGO_SESSION_COOKIE_SECURE", "True") == "True"
+CSRF_COOKIE_SECURE = os.environ.get("DJANGO_CSRF_COOKIE_SECURE", "True") == "True"
+
+# Other browser security headers
+X_FRAME_OPTIONS = "DENY"                 # prevents clickjacking by disallowing framing
+SECURE_CONTENT_TYPE_NOSNIFF = True       # prevents MIME type sniffing
+SECURE_BROWSER_XSS_FILTER = True         # enables browser's XSS filter
+
+# If Django is behind a trusted proxy/load balancer (e.g. nginx, ELB)
+# and that proxy sets X-Forwarded-Proto, configure this so Django knows the request was HTTPS.
+# Example: ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Optional: ensure SESSION_COOKIE_HTTPONLY to prevent JS access to session cookie
+SESSION_COOKIE_HTTPONLY = True
+
