@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'bookshelf',
     'relationship_app',
     "accounts",
+    "csp",
 ]
 
 MIDDLEWARE = [
@@ -53,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "csp.middleware.CSPMiddleware",
 ]
 
 ROOT_URLCONF = 'LibraryProject.urls'
@@ -132,3 +134,64 @@ AUTH_USER_MODEL = "bookshelf.CustomUser"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+
+
+# SECURITY (core)
+# ----------------
+# Development: keep DEBUG True only locally. Production must be False.
+DEBUG = False   # <--- PRODUCTION: set to False
+
+# Use environment variable for secret in production
+import os
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-secret-key-for-local")
+
+# Allowed hosts: set to your domain(s) in production
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost 127.0.0.1").split()
+
+# ----------------
+# Cookie & session security
+# ----------------
+# Ensure cookies are only sent over HTTPS in production:
+SESSION_COOKIE_SECURE = True        # production-only (requires HTTPS)
+CSRF_COOKIE_SECURE = True           # production-only (requires HTTPS)
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False        # usually False so JS libraries can read (keep default unless needed)
+
+# ----------------
+# Browser-side protections
+# ----------------
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"            # prevents clickjacking
+
+# ----------------
+# HSTS & SSL redirect (production-only)
+# ----------------
+SECURE_SSL_REDIRECT = True          # production-only (requires HTTPS)
+SECURE_HSTS_SECONDS = 60 * 60 * 24 * 7   # 1 week; increase in long-term production
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = False         # set True only after verifying
+
+# ----------------
+# Other useful settings
+# ----------------
+# Limit host header sizes and such if needed; keep defaults otherwise
+
+# ----------------
+# Static & media (ensure correct settings for production)
+# ----------------
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# ----------------
+# Content Security Policy (if using django-csp middleware)
+# Add the CSP middleware to MIDDLEWARE (see below)
+# ----------------
+# Example CSP (strict-ish) - adjust to your allowed domains
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'",)   # add external script origins as needed
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")  # 'unsafe-inline' only if required
+CSP_IMG_SRC = ("'self'", "data:")
+CSP_FONT_SRC = ("'self'", "data:")
