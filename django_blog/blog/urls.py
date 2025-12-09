@@ -30,5 +30,5 @@ urlpatterns = [
     path('post/<int:post_id>/comment/<int:pk>/delete/', CommentDeleteView.as_view(), name='comment-delete'),
     path('tags/<str:tag_name>/', PostsByTagView.as_view(), name='posts-by-tag'),
     path('search/', PostListView.as_view(), name='post-search'),  # search handled by query param ?q=
-
+    path('search/', views.search_posts, name='search_posts'),
 ]
