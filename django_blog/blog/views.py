@@ -123,6 +123,14 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         post = self.get_object()
         return post.author == self.request.user
     
+class PostByTagListView(ListView):
+    model = Post
+    template_name = 'blog/post_list_by_tag.html'
+    context_object_name = 'posts'
+
+    def get_queryset(self):
+        tag_slug = self.kwargs.get('tag_slug')
+        return Post.objects.filter(tags__slug=tag_slug)
 
 # Create a comment for a given post
 class CommentCreateView(LoginRequiredMixin, CreateView):

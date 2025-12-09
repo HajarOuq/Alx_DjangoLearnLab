@@ -5,6 +5,7 @@ from .views import (
     PostListView, PostDetailView, PostCreateView, PostUpdateView, PostDeleteView, PostsByTagView,
     CommentCreateView, CommentUpdateView, CommentDeleteView
 )
+from . import views
 
 urlpatterns = [
     # Login (uses Django's LoginView)
@@ -31,4 +32,5 @@ urlpatterns = [
     path('tags/<str:tag_name>/', PostsByTagView.as_view(), name='posts-by-tag'),
     path('search/', PostListView.as_view(), name='post-search'),  # search handled by query param ?q=
     path('search/', views.search_posts, name='search_posts'),
+    path('tags/<slug:tag_slug>/', views.PostByTagListView.as_view(), name='posts_by_tag'),
 ]
