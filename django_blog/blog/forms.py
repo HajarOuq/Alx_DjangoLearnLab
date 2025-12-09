@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Post
+from .models import Post, Comment
 
 # Extend UserCreationForm to include email and basic validation
 class CustomUserCreationForm(UserCreationForm):
@@ -29,3 +29,14 @@ class PostForm(forms.ModelForm):
         model = Post
         fields = ['title', 'content']
 
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['content']
+
+    def clean_content(self):
+        data = self.cleaned_data.get('content', '').strip()
+        if not data:
+            raise forms.ValidationError("Comment cannot be empty.")
+        return data
+    

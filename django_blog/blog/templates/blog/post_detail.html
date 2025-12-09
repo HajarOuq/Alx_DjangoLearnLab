@@ -6,10 +6,42 @@
   <div>{{ post.content|linebreaks }}</div>
 </article>
 
-{% if user.is_authenticated and user == post.author %}
-  <p>
-    <a href="{% url 'post-update' post.pk %}">Edit</a> |
-    <a href="{% url 'post-delete' post.pk %}">Delete</a>
-  </p>
-{% endif %}
+<hr>
+<section id="comments">
+  <h2>Comments ({{ comments.count }})</h2>
+
+  {% if comments %}
+    <ul>
+      {% for comment in comments %}
+        <li>
+          <p><strong>{{ comment.author.username }}</strong> — {{ comment.created_at|date:"SHORT_DATETIME_FORMAT" }}</p>
+          <p>{{ comment.content|linebreaks }}</p>
+          {% if user.is_authenticated and user == comment.author %}
+            <p>
+              <a href="{% url 'comment-edit' post.pk comment.pk %}">Edit</a> |
+              <a href="{% url 'comment-delete' post.pk comment.pk %}">Delete</a>
+            </p>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No comments yet.</p>
+  {% endif %}
+</section>
+
+<hr>
+<section id="add-comment">
+  {% if user.is_authenticated %}
+    <h3>Leave a comment</h3>
+    <form method="post" action="{% url 'comment-create' post.pk %}">
+      {% csrf_token %}
+      {{ comment_form.as_p }}
+      <button type="submit">Post comment</button>
+    </form>
+  {% else %}
+    <p><a href="{% url 'login' %}?next={% url 'post-detail' post.pk %}">Log in</a> to post a comment.</p>
+  {% endif %}
+</section>
+
 {% endblock %}
