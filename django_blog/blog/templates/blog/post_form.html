@@ -7,3 +7,8 @@
   <button type="submit">Save</button>
 </form>
 {% endblock %}
+{{ form.as_p }}
+<p>
+  <label for="id_tags_field">Tags (comma-separated):</label>
+  {{ form.tags_field }}
+</p>

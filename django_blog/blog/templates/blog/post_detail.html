@@ -29,6 +29,13 @@
     <p>No comments yet.</p>
   {% endif %}
 </section>
+<p>
+  {% for tag in post.tags.all %}
+    <a href="{% url 'posts-by-tag' tag.name %}">#{{ tag.name }}</a>{% if not forloop.last %}, {% endif %}
+  {% empty %}
+    <small>No tags</small>
+  {% endfor %}
+</p>
 
 <hr>
 <section id="add-comment">

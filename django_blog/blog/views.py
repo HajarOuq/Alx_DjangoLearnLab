@@ -2,19 +2,17 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
-from .forms import CustomUserCreationForm, ProfileForm
+from .forms import CustomUserCreationForm, ProfileForm, PostForm, CommentForm
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from .models import Post
-from .forms import PostForm
 from django.urls import reverse_lazy, reverse
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic import CreateView, UpdateView, DeleteView
-from .models import Post, Comment
-from .forms import CommentForm
-
+from django.views.generic import CreateView, UpdateView, DeleteView, ListView
+from .models import Post, Comment, Tag
+from django.db.models import Q
 
 # Registration view
 def register(request):
@@ -49,6 +47,24 @@ class PostListView(ListView):
     context_object_name = 'posts'
     ordering = ['-published_date']
     paginate_by = 10  # optional for usability
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related('author').prefetch_related('tags')
+        q = self.request.GET.get('q', '').strip()
+        tag = self.request.GET.get('tag', '').strip()
+        if q:
+            # search in title OR content (case-insensitive)
+            qs = qs.filter(Q(title__icontains=q) | Q(content__icontains=q))
+        if tag:
+            qs = qs.filter(tags__name__iexact=tag)
+        # distinct because joins with tags can create duplicates
+        return qs.distinct()
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['q'] = self.request.GET.get('q', '')
+        ctx['tag_query'] = self.request.GET.get('tag', '')
+        return ctx
 
 # Detail view for a single post - accessible to everyone
 class PostDetailView(DetailView):
@@ -141,3 +157,19 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         comment = self.get_object()
         return comment.author == self.request.user
     
+# Posts filtered by a tag in the URL: /tags/<tag_name>/
+class PostsByTagView(ListView):
+    model = Post
+    template_name = 'blog/post_list.html'  # reuse list template
+    context_object_name = 'posts'
+    paginate_by = 10
+
+    def get_queryset(self):
+        tag_name = self.kwargs.get('tag_name')
+        qs = Post.objects.filter(tags__name__iexact=tag_name).order_by('-published_date').distinct()
+        return qs.select_related('author').prefetch_related('tags')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['tag_name'] = self.kwargs.get('tag_name')
+        return ctx
