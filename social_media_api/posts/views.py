@@ -43,3 +43,40 @@ class FeedView(generics.ListAPIView):
         following_users = self.request.user.following.all()
         return Post.objects.filter(author__in=following_users).order_by('-created_at')
     
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status, permissions
+from django.shortcuts import get_object_or_404
+from .models import Post, Like
+from notifications.models import Notification
+from django.contrib.contenttypes.models import ContentType
+
+class LikePostView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+
+        like, created = Like.objects.get_or_create(
+            user=request.user,
+            post=post
+        )
+
+        if created:
+            Notification.objects.create(
+                recipient=post.author,
+                actor=request.user,
+                verb='liked your post',
+                target=post
+            )
+
+        return Response({'detail': 'Post liked'}, status=status.HTTP_200_OK)
+
+
+class UnlikePostView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+        Like.objects.filter(user=request.user, post=post).delete()
+        return Response({'detail': 'Post unliked'}, status=status.HTTP_200_OK)
