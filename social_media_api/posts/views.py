@@ -9,7 +9,7 @@ from .permissions import IsOwnerOrReadOnly
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from rest_framework import generics, permissions
 
 class PostPagination(PageNumberPagination):
     page_size = 10
@@ -35,12 +35,11 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-class FeedView(APIView):
-    permission_classes = [IsAuthenticated]
+class FeedView(generics.ListAPIView):
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request):
-        followed_users = request.user.following.all()
-        posts = Post.objects.filter(author__in=followed_users).order_by('-created_at')
-        serializer = PostSerializer(posts, many=True)
-        return Response(serializer.data)
+    def get_queryset(self):
+        following_users = self.request.user.following.all()
+        return Post.objects.filter(author__in=following_users).order_by('-created_at')
     
